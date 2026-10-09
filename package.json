@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "studio": "remotion studio",
-    "render": "remotion render Main out/instaspace-september.mp4",
+    "audio": "python3 scripts/make_audio.py",
+    "render": "remotion render Main out/instaspace-september.mp4 --codec=h264 --crf=16 --audio-codec=aac --audio-bitrate=192k",
     "qa": "node scripts/stills.mjs compare && python3 scripts/compare.py && python3 scripts/contact_sheet.py",
     "typecheck": "tsc -p ."
   },

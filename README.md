@@ -3,7 +3,7 @@
 Remotion project that rebuilds the six release slides in `reference/` as live
 layers and animates them into a 9:16 vertical video.
 
-**Output:** `out/instaspace-september.mp4` — 1080×1920, 30 fps, H.264 (yuv420p), no audio, 29.3 s.
+**Output:** `out/instaspace-september.mp4` — 1080×1920, 30 fps, H.264 (yuv420p), AAC stereo audio, 32.3 s.
 
 Slide order: What's new → Matters → Brief → Assistant → Rules → Try it today.
 
@@ -12,6 +12,7 @@ Slide order: What's new → Matters → Brief → Assistant → Rules → Try it
 ```bash
 npm install
 npm run studio      # preview / scrub in Remotion Studio
+npm run audio       # regenerate music + sound effects (needs numpy, scipy)
 npm run render      # → out/instaspace-september.mp4
 npm run qa          # still-vs-PNG comparisons + contact sheet in out/qa/
 npm run typecheck
@@ -29,6 +30,20 @@ npm run typecheck
   Display for the instaSpace wordmark, matching the PNGs.
 - `src/slides.tsx` holds each slide's layout and micro-interactions; `src/Main.tsx`
   holds the timeline, the ~300 ms overlapping transitions, the fixed wordmark and the arrow.
+
+## Audio
+
+All audio is original and generated in code by `scripts/make_audio.py` (no samples, no licensed music):
+
+- **Music** (`public/audio/music.wav`): a calm D-major bed with electric-piano chords, a soft pad,
+  a pluck arpeggio, sub bass, and light shaker and kick. The tempo (~99 BPM) is derived from the timeline so the
+  final Dmaj9 chord lands exactly as "Try it today" enters, and the track fades out on the last frame.
+- **Sound effects** (`public/audio/sfx/`): whoosh (transitions), land (card settles), tick (counters,
+  typing, rule pieces), pop (chips, tags, CTAs), check (checkmarks), click (cursor), blip (email and chat),
+  shimmer ("Proposed matter"), swipe ("Open automatically" fill). Each one is placed in `SLIDE_SFX`
+  (`src/slides.tsx`) using the same constants as the animation, so the sync holds when timing changes.
+- Mix: about −14 LUFS integrated, −2 dB true peak. Levels live in `src/Soundtrack.tsx`. To render a single stem
+  for checking, use `--props='{"stem":"music"}'` or `'{"stem":"sfx"}'`.
 
 ## QA
 

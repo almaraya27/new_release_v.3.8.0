@@ -131,7 +131,7 @@ export const S1Intake: React.FC<SlideProps> = ({ frame: f }) => {
     </>
   );
 };
-export const S1_DUR = 134;
+export const S1_DUR = 149;
 
 // ---------------------------------------------------------------------------
 // 2. Matters: drafted from email
@@ -273,7 +273,7 @@ export const S2Matters: React.FC<SlideProps> = ({ frame: f }) => {
     </>
   );
 };
-export const S2_DUR = 166;
+export const S2_DUR = 181;
 
 // ---------------------------------------------------------------------------
 // 3. Brief
@@ -370,7 +370,7 @@ export const S3Brief: React.FC<SlideProps> = ({ frame: f }) => {
     </>
   );
 };
-export const S3_DUR = 150;
+export const S3_DUR = 165;
 
 // ---------------------------------------------------------------------------
 // 4. Assistant
@@ -470,7 +470,7 @@ export const S4Assistant: React.FC<SlideProps> = ({ frame: f }) => {
     </>
   );
 };
-export const S4_DUR = 162;
+export const S4_DUR = 177;
 
 // ---------------------------------------------------------------------------
 // 5. Rules
@@ -584,7 +584,7 @@ export const S5Rules: React.FC<SlideProps> = ({ frame: f }) => {
     </>
   );
 };
-export const S5_DUR = 158;
+export const S5_DUR = 173;
 
 // ---------------------------------------------------------------------------
 // 6. Try it today
@@ -670,7 +670,7 @@ export const S6Try: React.FC<SlideProps> = ({ frame: f }) => {
     </>
   );
 };
-export const S6_DUR = 155;
+export const S6_DUR = 170;
 
 export const SLIDES = [
   { id: "intake", C: S1Intake, dur: S1_DUR },
@@ -680,3 +680,71 @@ export const SLIDES = [
   { id: "rules", C: S5Rules, dur: S5_DUR },
   { id: "try", C: S6Try, dur: S6_DUR },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Sound effects, in each slide's local frames. Keyed off the same constants as
+// the animations above so they stay in sync when timing changes.
+// ---------------------------------------------------------------------------
+
+export type SoundName = "whoosh" | "land" | "tick" | "pop" | "check" | "click" | "blip" | "shimmer" | "swipe";
+export type Sfx = { at: number; sound: SoundName; volume: number; rate?: number };
+
+// Small deterministic pitch variation so repeated sounds don't feel mechanical.
+const vary = (i: number, spread = 0.08) => 1 + spread * Math.sin(i * 12.9898 + 4.1);
+
+const typingTicks = (): Sfx[] => {
+  const total = S3_LINES[0].length + S3_LINES[1].length;
+  const out: Sfx[] = [];
+  for (let c = 0, i = 0; c < total; c += 4, i++) {
+    out.push({ at: Math.round(S3_TYPE_START + c / S3_CPS), sound: "tick", volume: 0.16, rate: vary(i, 0.15) });
+  }
+  return out;
+};
+
+const S4_CHIPS = S4_STREAM + S4_ANSWER.join(" ").split(" ").length * S4_WORD + 6;
+
+export const SLIDE_SFX: Sfx[][] = [
+  // 1. Intake & Matters: counters tick, first row checks, tags pop.
+  [
+    { at: T0 + 6, sound: "tick", volume: 0.25 },
+    { at: T0 + 11, sound: "tick", volume: 0.25, rate: 1.06 },
+    { at: T0 + 18, sound: "tick", volume: 0.25, rate: 1.12 },
+    { at: T0 + 28, sound: "check", volume: 0.32 },
+    ...[0, 1, 2].map((i): Sfx => ({ at: T0 + 31 + i * 4, sound: "pop", volume: 0.3, rate: vary(i) })),
+  ],
+  // 2. Matters: email arrives, AI shimmer, chips, cursor click.
+  [
+    { at: T0 + 3, sound: "blip", volume: 0.3 },
+    { at: T0 + 20, sound: "shimmer", volume: 0.28 },
+    ...[0, 1, 2].map((i): Sfx => ({ at: T0 + 31 + i * 4, sound: "pop", volume: 0.3, rate: vary(i + 3) })),
+    { at: S2_CLICK, sound: "click", volume: 0.5 },
+  ],
+  // 3. Brief: typing, chips, checkbox tick.
+  [
+    ...typingTicks(),
+    ...[0, 1, 2].map((i): Sfx => ({ at: T0 + 29 + i * 4, sound: "pop", volume: 0.3, rate: vary(i + 6) })),
+    { at: T0 + 56, sound: "check", volume: 0.32 },
+  ],
+  // 4. Assistant: question sent, answer starts, sources pop.
+  [
+    { at: T0 + 3, sound: "blip", volume: 0.28, rate: 1.12 },
+    { at: S4_STREAM, sound: "blip", volume: 0.24, rate: 0.89 },
+    { at: Math.round(S4_CHIPS) + 1, sound: "pop", volume: 0.3 },
+    { at: Math.round(S4_CHIPS) + 5, sound: "pop", volume: 0.3, rate: 1.08 },
+  ],
+  // 5. Rules: each piece snaps in, the action fills, the first row checks.
+  [
+    ...[0, 1, 2, 3, 4, 5, 6, 7].map(
+      (k): Sfx => ({ at: T0 + 3 + k * 4, sound: "tick", volume: k % 2 ? 0.32 : 0.18, rate: 0.9 + k * 0.03 }),
+    ),
+    { at: T0 + 28, sound: "swipe", volume: 0.22 },
+    { at: T0 + 58, sound: "check", volume: 0.32 },
+  ],
+  // 6. Try it today: email in, matter drafted, CTAs.
+  [
+    { at: T0 + 3, sound: "blip", volume: 0.26 },
+    { at: T0 + 29, sound: "pop", volume: 0.32, rate: 0.85 },
+    { at: T0 + 47, sound: "pop", volume: 0.3, rate: 0.75 },
+    { at: T0 + 52, sound: "pop", volume: 0.3, rate: 0.8 },
+  ],
+];

@@ -1,22 +1,14 @@
 """Builds out/qa/contact-sheet.png: each slide's final (fully built) state, pulled
 from the rendered MP4 so it shows exactly what ships. Also writes the individual
 frames to out/qa/final-N.png."""
-import re
 import subprocess
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parent.parent
-src = (ROOT / "src/slides.tsx").read_text()
-main = (ROOT / "src/Main.tsx").read_text()
-durs = [int(re.search(rf"export const S{i}_DUR = (\d+);", src).group(1)) for i in range(1, 7)]
-overlap = int(re.search(r"export const OVERLAP = (\d+);", main).group(1))
-exit_ = int(re.search(r"export const EXIT = (\d+);", main).group(1))
+from timeline import load
 
-frames, start = [], 0
-for i, d in enumerate(durs):
-    frames.append(start + (d - 1 if i == 5 else d - exit_ - 1))
-    start += d - overlap
+ROOT = Path(__file__).resolve().parent.parent
+frames = load()["built"]
 
 video = ROOT / "out/instaspace-september.mp4"
 out = ROOT / "out/qa"

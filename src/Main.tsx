@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { useFontsReady } from "./fonts";
 import { SLIDES } from "./slides";
+import { Soundtrack } from "./Soundtrack";
 import { C, CANVAS_H, DESIGN_H, FRAME_OFFSET_Y, SCALE, VIDEO_H, VIDEO_W } from "./theme";
 import { Arrow, DotField, QaContext, Wordmark } from "./ui";
 
@@ -86,6 +87,7 @@ export const Main: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ background: C.bg, width: VIDEO_W, height: VIDEO_H }}>
+      <Soundtrack timeline={TIMELINE} exit={EXIT} overlap={OVERLAP} />
       <div
         style={{
           position: "absolute",

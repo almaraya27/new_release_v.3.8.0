@@ -4,9 +4,6 @@ import { Config } from "@remotion/cli/config";
 // PNG frames keep the encode in standard (limited-range) yuv420p.
 Config.setVideoImageFormat("png");
 Config.setPixelFormat("yuv420p");
-Config.setCodec("h264");
-Config.setCrf(16);
-Config.setMuted(true);
 Config.setOverwriteOutput(true);
 
 // In the cloud container Chromium ships as Playwright's headless shell.

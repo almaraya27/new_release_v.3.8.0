@@ -1,0 +1,26 @@
+{
+  "name": "instaspace-september",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Main out/instaspace-september.mp4",
+    "qa": "node scripts/stills.mjs compare && python3 scripts/compare.py && python3 scripts/contact_sheet.py",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@remotion/cli": "^4.0.534",
+    "@types/react": "^19.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.534",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "^4.0.534",
+    "@remotion/renderer": "^4.0.534"
+  }
+}

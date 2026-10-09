@@ -686,65 +686,44 @@ export const SLIDES = [
 // the animations above so they stay in sync when timing changes.
 // ---------------------------------------------------------------------------
 
-export type SoundName = "whoosh" | "land" | "tick" | "pop" | "check" | "click" | "blip" | "shimmer" | "swipe";
+export type SoundName = "whoosh" | "land" | "tap" | "check" | "click" | "note-hi" | "note-lo" | "insight";
 export type Sfx = { at: number; sound: SoundName; volume: number; rate?: number };
-
-// Small deterministic pitch variation so repeated sounds don't feel mechanical.
-const vary = (i: number, spread = 0.08) => 1 + spread * Math.sin(i * 12.9898 + 4.1);
-
-const typingTicks = (): Sfx[] => {
-  const total = S3_LINES[0].length + S3_LINES[1].length;
-  const out: Sfx[] = [];
-  for (let c = 0, i = 0; c < total; c += 4, i++) {
-    out.push({ at: Math.round(S3_TYPE_START + c / S3_CPS), sound: "tick", volume: 0.16, rate: vary(i, 0.15) });
-  }
-  return out;
-};
 
 const S4_CHIPS = S4_STREAM + S4_ANSWER.join(" ").split(" ").length * S4_WORD + 6;
 
+// Deliberately sparse: one sound per meaningful moment, not per element.
 export const SLIDE_SFX: Sfx[][] = [
-  // 1. Intake & Matters: counters tick, first row checks, tags pop.
+  // 1. Intake & Matters: the first matter is checked, tags arrive.
   [
-    { at: T0 + 6, sound: "tick", volume: 0.25 },
-    { at: T0 + 11, sound: "tick", volume: 0.25, rate: 1.06 },
-    { at: T0 + 18, sound: "tick", volume: 0.25, rate: 1.12 },
-    { at: T0 + 28, sound: "check", volume: 0.32 },
-    ...[0, 1, 2].map((i): Sfx => ({ at: T0 + 31 + i * 4, sound: "pop", volume: 0.3, rate: vary(i) })),
+    { at: T0 + 28, sound: "check", volume: 0.42 },
+    { at: T0 + 31, sound: "tap", volume: 0.4 },
   ],
-  // 2. Matters: email arrives, AI shimmer, chips, cursor click.
+  // 2. Matters: email arrives, the matter is proposed, cursor clicks.
   [
-    { at: T0 + 3, sound: "blip", volume: 0.3 },
-    { at: T0 + 20, sound: "shimmer", volume: 0.28 },
-    ...[0, 1, 2].map((i): Sfx => ({ at: T0 + 31 + i * 4, sound: "pop", volume: 0.3, rate: vary(i + 3) })),
-    { at: S2_CLICK, sound: "click", volume: 0.5 },
+    { at: T0 + 3, sound: "note-hi", volume: 0.36 },
+    { at: T0 + 16, sound: "insight", volume: 0.42 },
+    { at: S2_CLICK, sound: "click", volume: 0.6 },
   ],
-  // 3. Brief: typing, chips, checkbox tick.
+  // 3. Brief: chips arrive, the liability cap is checked.
   [
-    ...typingTicks(),
-    ...[0, 1, 2].map((i): Sfx => ({ at: T0 + 29 + i * 4, sound: "pop", volume: 0.3, rate: vary(i + 6) })),
-    { at: T0 + 56, sound: "check", volume: 0.32 },
+    { at: T0 + 29, sound: "tap", volume: 0.4 },
+    { at: T0 + 56, sound: "check", volume: 0.42 },
   ],
-  // 4. Assistant: question sent, answer starts, sources pop.
+  // 4. Assistant: question sent, answer arrives, sources land.
   [
-    { at: T0 + 3, sound: "blip", volume: 0.28, rate: 1.12 },
-    { at: S4_STREAM, sound: "blip", volume: 0.24, rate: 0.89 },
-    { at: Math.round(S4_CHIPS) + 1, sound: "pop", volume: 0.3 },
-    { at: Math.round(S4_CHIPS) + 5, sound: "pop", volume: 0.3, rate: 1.08 },
+    { at: T0 + 3, sound: "note-hi", volume: 0.34 },
+    { at: S4_STREAM, sound: "note-lo", volume: 0.34 },
+    { at: Math.round(S4_CHIPS) + 1, sound: "tap", volume: 0.4 },
   ],
-  // 5. Rules: each piece snaps in, the action fills, the first row checks.
+  // 5. Rules: the four rule pieces settle, the first row is checked.
   [
-    ...[0, 1, 2, 3, 4, 5, 6, 7].map(
-      (k): Sfx => ({ at: T0 + 3 + k * 4, sound: "tick", volume: k % 2 ? 0.32 : 0.18, rate: 0.9 + k * 0.03 }),
-    ),
-    { at: T0 + 28, sound: "swipe", volume: 0.22 },
-    { at: T0 + 58, sound: "check", volume: 0.32 },
+    ...[1, 3, 5, 7].map((k): Sfx => ({ at: T0 + 3 + k * 4, sound: "tap", volume: 0.32 })),
+    { at: T0 + 58, sound: "check", volume: 0.42 },
   ],
   // 6. Try it today: email in, matter drafted, CTAs.
   [
-    { at: T0 + 3, sound: "blip", volume: 0.26 },
-    { at: T0 + 29, sound: "pop", volume: 0.32, rate: 0.85 },
-    { at: T0 + 47, sound: "pop", volume: 0.3, rate: 0.75 },
-    { at: T0 + 52, sound: "pop", volume: 0.3, rate: 0.8 },
+    { at: T0 + 3, sound: "note-hi", volume: 0.34 },
+    { at: T0 + 29, sound: "note-lo", volume: 0.34 },
+    { at: T0 + 47, sound: "tap", volume: 0.4 },
   ],
 ];

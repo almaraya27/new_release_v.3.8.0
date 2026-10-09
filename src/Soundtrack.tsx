@@ -24,9 +24,9 @@ export const Soundtrack: React.FC<{ timeline: Timed; exit: number; overlap: numb
     {stem !== "music" && timeline.map((s, i) => (
       <React.Fragment key={i}>
         {/* Soft whoosh as the previous slide drifts out and this one comes in. */}
-        {i > 0 ? <Sound at={s.start + overlap - exit - 2} sound="whoosh" volume={0.26} /> : null}
+        {i > 0 ? <Sound at={s.start + overlap - exit - 2} sound="whoosh" volume={0.3} /> : null}
         {/* The card settling into place. */}
-        <Sound at={s.start + CARD_START + 12} sound="land" volume={0.34} />
+        <Sound at={s.start + CARD_START + 12} sound="land" volume={0.3} />
         {SLIDE_SFX[i].map((e, j) => (
           <Sound key={j} at={s.start + e.at} sound={e.sound} volume={e.volume} rate={e.rate} />
         ))}

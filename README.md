@@ -35,13 +35,14 @@ npm run typecheck
 
 All audio is original and generated in code by `scripts/make_audio.py` (no samples, no licensed music):
 
-- **Music** (`public/audio/music.wav`): a calm D-major bed with electric-piano chords, a soft pad,
-  a pluck arpeggio, sub bass, and light shaker and kick. The tempo (~99 BPM) is derived from the timeline so the
-  final Dmaj9 chord lands exactly as "Try it today" enters, and the track fades out on the last frame.
-- **Sound effects** (`public/audio/sfx/`): whoosh (transitions), land (card settles), tick (counters,
-  typing, rule pieces), pop (chips, tags, CTAs), check (checkmarks), click (cursor), blip (email and chat),
-  shimmer ("Proposed matter"), swipe ("Open automatically" fill). Each one is placed in `SLIDE_SFX`
-  (`src/slides.tsx`) using the same constants as the animation, so the sync holds when timing changes.
+- **Music** (`public/audio/music.wav`): a warm, understated piano with low strings in Bb major / G minor,
+  with no drums. It opens on solo piano and the strings enter in bar 3. The tempo (~99 BPM) is derived from the timeline so the
+  closing Bbmaj9 lands exactly as "Try it today" enters, and the track fades out on the last frame.
+- **Sound effects** (`public/audio/sfx/`), kept low, soft and sparse: whoosh (smooth air, slide transitions),
+  land (card settles), tap (muted wooden tap for chips and rule pieces), check (two soft piano notes, F4 to Bb4),
+  note-hi / note-lo (single piano notes for email and chat), click (cursor), and insight ("Proposed matter": a low
+  string swell resolving onto a piano dyad). Pitched sounds use F and Bb, which sit inside every chord of the music.
+  Each one is placed in `SLIDE_SFX` (`src/slides.tsx`) using the same constants as the animation.
 - Mix: about −14 LUFS integrated, −2 dB true peak. Levels live in `src/Soundtrack.tsx`. To render a single stem
   for checking, use `--props='{"stem":"music"}'` or `'{"stem":"sfx"}'`.
 

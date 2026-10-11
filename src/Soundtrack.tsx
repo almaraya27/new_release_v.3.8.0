@@ -3,11 +3,11 @@ import { Audio, getInputProps, Sequence, staticFile } from "remotion";
 import { SLIDE_SFX, type SoundName } from "./slides";
 import { CARD_START } from "./ui";
 
-export const MUSIC_VOLUME = 0.85;
+export const MUSIC_VOLUME = 0.55;
 
 // QA: render a single stem with --props='{"stem":"music"}' or '{"stem":"sfx"}'.
 const stem = (getInputProps() as { stem?: "music" | "sfx" }).stem;
-const SFX_GAIN = 1;
+const SFX_GAIN = 1.75;
 
 type Timed = { start: number }[];
 
@@ -18,13 +18,11 @@ const Sound: React.FC<{ at: number; sound: SoundName; volume: number; rate?: num
 );
 
 // Music bed plus every sound effect, placed on the global timeline.
-export const Soundtrack: React.FC<{ timeline: Timed; exit: number; overlap: number }> = ({ timeline, exit, overlap }) => (
+export const Soundtrack: React.FC<{ timeline: Timed }> = ({ timeline }) => (
   <>
     {stem !== "sfx" ? <Audio src={staticFile("audio/music.wav")} volume={MUSIC_VOLUME} /> : null}
     {stem !== "music" && timeline.map((s, i) => (
       <React.Fragment key={i}>
-        {/* Soft whoosh as the previous slide drifts out and this one comes in. */}
-        {i > 0 ? <Sound at={s.start + overlap - exit - 2} sound="whoosh" volume={0.3} /> : null}
         {/* The card settling into place. */}
         <Sound at={s.start + CARD_START + 12} sound="land" volume={0.3} />
         {SLIDE_SFX[i].map((e, j) => (

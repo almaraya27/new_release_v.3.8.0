@@ -686,7 +686,7 @@ export const SLIDES = [
 // the animations above so they stay in sync when timing changes.
 // ---------------------------------------------------------------------------
 
-export type SoundName = "whoosh" | "land" | "tap" | "check" | "click" | "note-hi" | "note-lo" | "insight";
+export type SoundName = "land" | "tap" | "check" | "click" | "note-hi" | "note-lo" | "insight";
 export type Sfx = { at: number; sound: SoundName; volume: number; rate?: number };
 
 const S4_CHIPS = S4_STREAM + S4_ANSWER.join(" ").split(" ").length * S4_WORD + 6;

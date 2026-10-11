@@ -4,7 +4,7 @@ import { useFontsReady } from "./fonts";
 import { SLIDES } from "./slides";
 import { Soundtrack } from "./Soundtrack";
 import { C, CANVAS_H, DESIGN_H, FRAME_OFFSET_Y, SCALE, VIDEO_H, VIDEO_W } from "./theme";
-import { Arrow, DotField, QaContext, Wordmark } from "./ui";
+import { DotField, QaContext, Wordmark } from "./ui";
 
 export const OVERLAP = 9; // ~300 ms: next slide starts entering while the current one leaves
 export const EXIT = 14;
@@ -26,16 +26,24 @@ export const builtFrame = (i: number) =>
 
 const exitEase = Easing.bezier(0.4, 0, 0.7, 0.2);
 
-// Dot patch that bleeds off the top-right corner of the frame.
-export const CornerDots: React.FC<{ top: number }> = ({ top }) => (
-  <DotField
-    x={900}
-    y={top - 420}
-    w={700}
-    h={900}
-    mask={`radial-gradient(640px 470px at 700px 420px, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0) 100%)`}
-  />
-);
+// Dot patch that bleeds off the top-right corner of the frame. The dots
+// slowly circle under a fixed mask (one lap every 8 s, ~4.7 px radius).
+const DRIFT_RADIUS = 7; // design units (~4.7 px in the video)
+const DRIFT_PERIOD = 8 * 30; // frames
+
+export const CornerDots: React.FC<{ top: number; frame?: number }> = ({ top, frame = 0 }) => {
+  const a = (frame / DRIFT_PERIOD) * Math.PI * 2;
+  return (
+    <DotField
+      x={900}
+      y={top - 420}
+      w={700}
+      h={900}
+      drift={[DRIFT_RADIUS * Math.sin(a), DRIFT_RADIUS * (1 - Math.cos(a))]}
+      mask={`radial-gradient(640px 470px at 700px 420px, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0) 100%)`}
+    />
+  );
+};
 
 // One slide in the 1600 x 2000 reference frame, with its exit applied.
 const SlideLayer: React.FC<{ i: number; frame: number }> = ({ i, frame }) => {
@@ -68,26 +76,9 @@ export const Main: React.FC = () => {
   const frame = useCurrentFrame();
   useFontsReady();
 
-  // The arrow nudges right once just before each of the first five transitions,
-  // then bows out as the final slide arrives.
-  let nudge = 0;
-  for (const s of TIMELINE.slice(0, 5)) {
-    const a = s.end - OVERLAP - EXIT - 14;
-    nudge += interpolate(frame, [a, a + 7, a + 16], [0, 1, 0], {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-      easing: Easing.inOut(Easing.sin),
-    });
-  }
-  const last = TIMELINE[5];
-  const arrowOpacity = interpolate(frame, [last.start - 2, last.start + 8], [1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
   return (
     <AbsoluteFill style={{ background: C.bg, width: VIDEO_W, height: VIDEO_H }}>
-      <Soundtrack timeline={TIMELINE} exit={EXIT} overlap={OVERLAP} />
+      <Soundtrack timeline={TIMELINE} />
       <div
         style={{
           position: "absolute",
@@ -100,13 +91,12 @@ export const Main: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        <CornerDots top={FRAME_OFFSET_Y} />
+        <CornerDots top={FRAME_OFFSET_Y} frame={frame} />
         <div style={{ position: "absolute", left: 0, top: FRAME_OFFSET_Y, width: 1600, height: DESIGN_H }}>
           {TIMELINE.map((s) => (
             <SlideLayer key={s.id} i={s.index} frame={frame} />
           ))}
           <Wordmark x={150} y={1839} />
-          <Arrow x={1397} y={1821} style={{ opacity: arrowOpacity, transform: `translateX(${nudge * 14}px)` }} />
         </div>
       </div>
     </AbsoluteFill>
@@ -124,7 +114,6 @@ export const Compare: React.FC<{ slide: number }> = ({ slide }) => {
         <CornerDots top={0} />
         <s.C frame={builtFrame(slide)} />
         <Wordmark x={150} y={1839} />
-        {slide < 5 ? <Arrow x={1397} y={1821} /> : null}
       </AbsoluteFill>
     </QaContext.Provider>
   );

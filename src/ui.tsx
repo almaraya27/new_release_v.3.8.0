@@ -417,10 +417,11 @@ export const DotField: React.FC<{
   opacity?: number;
   color?: string;
   phaseY?: number;
-}> = ({ x, y, w, h, mask, opacity = 1, color = C.dot, phaseY = DOT_PHASE_Y }) => {
+  drift?: [number, number]; // moves the dots under a fixed mask
+}> = ({ x, y, w, h, mask, opacity = 1, color = C.dot, phaseY = DOT_PHASE_Y, drift = [0, 0] }) => {
   const half = DOT_PITCH / 2;
-  const bx = mod(DOT_PHASE_X - half - x, DOT_PITCH);
-  const by = mod(phaseY - half - y, DOT_PITCH);
+  const bx = mod(DOT_PHASE_X - half - x, DOT_PITCH) + drift[0];
+  const by = mod(phaseY - half - y, DOT_PITCH) + drift[1];
   return (
     <div
       style={{
@@ -466,24 +467,6 @@ export const Wordmark: React.FC<{ x: number; y: number }> = ({ x, y }) => (
   <Txt x={x} y={y} size={61} family="wordmark" weight={WORDMARK_WEIGHT} ls={-0.006} color="#000">
     instaSpace.
   </Txt>
-);
-
-export const Arrow: React.FC<{ x: number; y: number; style?: React.CSSProperties }> = ({ x, y, style }) => (
-  <svg
-    width={60}
-    height={34}
-    viewBox="0 0 60 34"
-    style={{ position: "absolute", left: x, top: y - 17, overflow: "visible", ...style }}
-  >
-    <path
-      d="M1 17 H52.5 M40 5.5 L52.5 17 L40 28.5"
-      fill="none"
-      stroke="#000"
-      strokeWidth={3.6}
-      strokeLinecap="butt"
-      strokeLinejoin="miter"
-    />
-  </svg>
 );
 
 export const Cursor: React.FC<{ x: number; y: number; scale?: number; opacity?: number }> = ({

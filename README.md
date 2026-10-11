@@ -50,7 +50,7 @@ All audio is original and generated in code by `scripts/make_audio.py` (no sampl
 
   Each one is placed in `SLIDE_SFX` (`src/slides.tsx`) using the same constants as the animation, so the sync holds
   when timing changes. Levels live there and in `src/Soundtrack.tsx`. Each sound has its own seeded RNG, so
-  `python3 scripts/make_audio.py tick msg` regenerates only those files.
+  `python3 scripts/make_audio.py tap msg` regenerates only those files.
 - Mix: effects about 15 dB above the music. To check a single stem, render with `--props='{"stem":"music"}'` or `'{"stem":"sfx"}'`.
 
 ## QA

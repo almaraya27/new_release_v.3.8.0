@@ -3,7 +3,7 @@
 Remotion project that rebuilds the six release slides in `reference/` as live
 layers and animates them into a 9:16 vertical video.
 
-**Output:** `out/instaspace-september.mp4` — 1080×1920, 30 fps, H.264 (yuv420p), AAC stereo audio, 32.3 s.
+**Output:** `out/instaspace-september.mp4` — 1080×1920, 30 fps, H.264 (yuv420p), AAC stereo audio (sound effects only, no music), 32.3 s.
 
 Slide order: What's new → Matters → Brief → Assistant → Rules → Try it today.
 
@@ -12,8 +12,7 @@ Slide order: What's new → Matters → Brief → Assistant → Rules → Try it
 ```bash
 npm install
 npm run studio      # preview / scrub in Remotion Studio
-npm run audio       # regenerate music + sound effects (needs numpy, scipy)
-python3 scripts/make_audio.py --music   # regenerate the music only
+npm run audio       # regenerate the sound effects (needs numpy, scipy)
 npm run render      # → out/instaspace-september.mp4
 npm run qa          # still-vs-PNG comparisons + contact sheet in out/qa/
 npm run typecheck
@@ -35,18 +34,14 @@ npm run typecheck
 
 ## Audio
 
-All audio is original and generated in code by `scripts/make_audio.py` (no samples, no licensed music):
+Sound effects only, with no music. All of them are original and generated in code by `scripts/make_audio.py` (no samples):
 
-- **Music** (`public/audio/music.wav`): an upbeat, clean product-presentation bed in Bb major at about 117 BPM. It has a
-  syncopated piano pulse, round bass, soft kick, rim and hats, and strings underneath. It builds over the first
-  bars, drops the drums just before the last slide, and lands on a ringing Bbmaj9 as "Try it today" enters
-  (the tempo is derived from the timeline). The music sits well under the effects.
-- **Sound effects** (`public/audio/sfx/`), kept low, soft and sparse: land (card settles), tap (muted wooden tap for chips and rule pieces), check (two soft piano notes, F4 to Bb4),
-  note-hi / note-lo (single piano notes for email and chat), click (cursor), and insight ("Proposed matter": a low
-  string swell resolving onto a piano dyad). Pitched sounds use F and Bb, which sit inside every chord of the music.
-  Each one is placed in `SLIDE_SFX` (`src/slides.tsx`) using the same constants as the animation.
-- Mix: about −16 LUFS integrated, −2 dB true peak; effects about 7 dB above the music at each event. Levels live in `src/Soundtrack.tsx`. To render a single stem
-  for checking, use `--props='{"stem":"music"}'` or `'{"stem":"sfx"}'`.
+- **Sound effects** (`public/audio/sfx/`), kept low, soft and sparse: land (card settles), tap (muted wooden
+  tap for chips and rule pieces), check (two soft piano notes, F4 to Bb4), note-hi / note-lo (single piano notes for
+  email and chat), click (cursor), and insight ("Proposed matter": a low string swell resolving onto a piano dyad).
+  Each one is placed in `SLIDE_SFX` (`src/slides.tsx`) using the same constants as the animation, so the sync holds
+  when timing changes. Levels live in `src/Soundtrack.tsx`.
+- Mix: about −17 LUFS integrated, under −0.5 dB true peak.
 
 ## QA
 

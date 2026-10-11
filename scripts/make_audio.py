@@ -1,13 +1,9 @@
-"""Synthesizes the soundtrack: an original, upbeat piano-led music bed plus a
-small palette of soft UI sound effects. Everything is generated from scratch (no samples), so it is
-royalty-free.
+"""Synthesizes the video's sound effects: a small palette of soft UI sounds.
+Everything is generated from scratch (no samples), so it is royalty-free.
 
-    python3 scripts/make_audio.py            # music + effects
-    python3 scripts/make_audio.py --music    # music only
+    python3 scripts/make_audio.py
 
-Writes public/audio/music.wav and public/audio/sfx/<name>.wav (48 kHz stereo).
-The music's tempo is derived from the video timeline so the final chord lands
-exactly as the last slide ("Try it today") enters.
+Writes public/audio/sfx/<name>.wav (48 kHz stereo).
 """
 import wave
 from pathlib import Path
@@ -15,7 +11,7 @@ from pathlib import Path
 import numpy as np
 from scipy.signal import butter, fftconvolve, sosfilt
 
-from timeline import FPS, ROOT, load
+from timeline import ROOT
 
 SR = 48000
 rng = np.random.default_rng(7)
@@ -152,139 +148,7 @@ def felt_tap(f0=420, f1=300, decay=0.03):
 
 
 # ---------------------------------------------------------------------------
-# Music: an upbeat, clean product-presentation bed in Bb major (~117 BPM).
-# Pulsing piano, round bass, soft kick / rim / hats, strings underneath.
-# Same key as the effects, whose F and Bb notes sit in every chord here.
-# ---------------------------------------------------------------------------
-
-def soft_kick():
-    t = t_axis(0.4)
-    f = 50 + 60 * np.exp(-t / 0.03)
-    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.16)
-    return lp(body * np.minimum(t / 0.002, 1), 900)
-
-
-def rim():
-    """Soft rim / finger-snap: short, mid-range, rounded."""
-    t = t_axis(0.18)
-    tone = np.sin(2 * np.pi * 820 * t) * np.exp(-t / 0.012)
-    noise = bp(rng.standard_normal(len(t)), 900, 3200) * np.exp(-t / 0.02) * 0.6
-    return lp((tone + noise) * np.minimum(t / 0.001, 1), 4500)
-
-
-def hat(vel=1.0):
-    t = t_axis(0.08)
-    x = bp(rng.standard_normal(len(t)), 5000, 9000) * np.exp(-t / 0.018)
-    return x * np.minimum(t / 0.001, 1) * vel
-
-
-def round_bass(note, dur):
-    """Rounded electric-style bass: sine plus a little filtered second harmonic."""
-    f = hz(note)
-    t = t_axis(dur + 0.2)
-    x = np.sin(2 * np.pi * f * t) + 0.3 * np.sin(4 * np.pi * f * t) * np.exp(-t / 0.08)
-    return x * adsr(len(t), 0.006, 0.25, 0.65, 0.06, dur)
-
-
-# Bb - F/A - Gm7 - Ebmaj7 (I - V6 - vi7 - IVmaj7), then an F turnaround.
-CHORDS = [
-    {"bass": 34, "keys": [62, 65, 69, 72], "str": [46, 53, 58]},  # Bbadd9-ish (D F A C)
-    {"bass": 33, "keys": [60, 65, 69, 72], "str": [45, 53, 57]},  # F/A
-    {"bass": 31, "keys": [62, 65, 70, 74], "str": [43, 50, 58]},  # Gm7
-    {"bass": 39, "keys": [62, 67, 70, 74], "str": [39, 46, 55]},  # Ebmaj7
-]
-TURN = {"bass": 41, "keys": [60, 65, 70, 72], "str": [41, 48, 53]}  # Fsus4
-FINAL = {"bass": 34, "keys": [57, 60, 62, 65, 69], "str": [41, 50, 57]}  # Bbmaj9
-
-# 8th-note positions (0-7) the right hand plays, with velocities: a light,
-# syncopated pulse rather than a straight eighth grind.
-PULSE = [(0, 0.5), (1, 0.28), (3, 0.42), (4, 0.3), (6, 0.44), (7, 0.28)]
-BASS = [(0, 1.5), (3, 0.5), (4, 1.0), (6, 0.75), (7, 0.5)]  # (8th position, length in 8ths)
-
-
-def make_music(tl):
-    total = tl["total"] / FPS
-    final_at = tl["starts"][5] / FPS
-    bars = 13
-    bar = final_at / bars
-    beat = bar / 4
-    e8 = beat / 2
-    print(f"music: {total:.2f}s, {60 / beat:.1f} BPM, final chord at {final_at:.2f}s")
-
-    n = int((total + 0.05) * SR)
-    keys = np.zeros((n, 2))
-    strs = np.zeros((n, 2))
-    low = np.zeros((n, 2))
-    drums = np.zeros((n, 2))
-
-    for b in range(bars):
-        ch = TURN if b == bars - 1 else CHORDS[b % 4]
-        t0 = b * bar
-        last = b == bars - 1
-        # Piano pulse: short, slightly detached chords.
-        for pos, vel in PULSE:
-            if last and pos >= 6:
-                break
-            for i, nte in enumerate(ch["keys"]):
-                v = vel * (0.85 if b < 2 else 1.0)
-                place(keys, stereo(piano(nte, e8 * 0.8, v), -0.2 + 0.13 * i), t0 + pos * e8 + 0.004 * i)
-        # Strings underneath from bar 1.
-        if b >= 1:
-            place(strs, stereo(strings(ch["str"], bar), 0), t0)
-        # Bass from bar 2.
-        if b >= 2:
-            for pos, length in BASS:
-                if last and pos >= 6:
-                    break
-                nte = ch["bass"] + (12 if pos == 7 else 0)
-                place(low, stereo(round_bass(nte + 12, length * e8 * 0.9), 0), t0 + pos * e8)
-        # Drums: kick from bar 2, rim on 2 and 4 and hats from bar 4.
-        if b >= 2:
-            for k in (0, 2) if not last else (0,):
-                place(drums, stereo(soft_kick(), 0), t0 + k * beat)
-            place(drums, stereo(soft_kick() * 0.45, 0), t0 + 3.5 * beat) if not last else None
-        if b >= 4:
-            for k in (1, 3) if not last else (1,):
-                place(drums, stereo(rim(), 0.15), t0 + k * beat)
-            for s8 in range(8):
-                if last and s8 >= 4:
-                    break
-                place(drums, stereo(hat(0.55 if s8 % 2 else 0.3), 0.35), t0 + s8 * e8)
-
-    # Lift into the final chord: strings swell over the last two beats.
-    swell = strings(FINAL["str"], beat * 2.2)[: int(beat * 2 * SR)]
-    swell *= np.linspace(0, 1, len(swell)) ** 1.5
-    place(strs, stereo(swell, 0), final_at - beat * 2)
-
-    # Final Bbmaj9: one kick, a full piano chord that rings, bass and strings.
-    tail = total - final_at
-    place(drums, stereo(soft_kick(), 0), final_at)
-    for i, nte in enumerate(FINAL["keys"]):
-        place(keys, stereo(piano(nte, tail, 0.5), -0.25 + 0.12 * i), final_at + 0.015 * i)
-    for i, nte in enumerate([70, 69, 65]):
-        place(keys, stereo(piano(nte, tail, 0.32), 0.2), final_at + (2 + i) * beat)
-    place(low, stereo(round_bass(FINAL["bass"] + 12, tail * 0.8), 0), final_at)
-    place(strs, stereo(strings(FINAL["str"], tail), 0), final_at)
-
-    mix = (
-        keys * 10 ** (-7 / 20)
-        + lp(strs, 2400) * 10 ** (-15 / 20)
-        + low * 10 ** (-11 / 20)
-        + drums * 10 ** (-13 / 20)
-    )
-    mix = reverb(mix, reverb_ir(1.6, 4000), 0.24)
-    mix = hp(mix, 30)
-
-    t = np.arange(n) / SR
-    fade = np.minimum(t / 0.15, 1) * np.clip((total - t) / 2.4, 0, 1) ** 1.5
-    mix *= fade[:, None]
-    mix = np.tanh(mix * 1.1) / 1.1
-    write_wav(OUT / "music.wav", mix, -1.0)
-
-
-# ---------------------------------------------------------------------------
-# Sound effects: low, soft and in key (notes are F and Bb, which sit inside
-# every chord of the music).
+# Sound effects: low, soft and in key with each other (pitched sounds use F and Bb).
 # ---------------------------------------------------------------------------
 
 SFX_IR = None
@@ -381,10 +245,4 @@ def make_sfx():
 
 
 if __name__ == "__main__":
-    import sys
-
-    tl = load()
-    # `--music` regenerates only the music and leaves the effects untouched.
-    if "--music" not in sys.argv:
-        make_sfx()
-    make_music(tl)
+    make_sfx()

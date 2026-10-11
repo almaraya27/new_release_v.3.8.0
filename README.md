@@ -37,21 +37,19 @@ npm run typecheck
 
 All audio is original and generated in code by `scripts/make_audio.py` (no samples, no licensed music):
 
-- **Music** (`public/audio/music.wav`): a faint, medium-swing jazz trio bed in Bb at about 117 BPM. It has a walking
-  upright bass, brushes and a soft ride, and Rhodes comping over ii–V–I–VI (Cm9, F13, Bbmaj9, G7b9). It lands on Bb6/9
-  as "Try it today" enters and rings out. It's mixed about 15 dB under the effects (`MUSIC_VOLUME` in `src/Soundtrack.tsx`).
-- **Sound effects** (`public/audio/sfx/`), kept soft and sparse:
-  - `land`: deep felt thud as each card settles.
-  - `tap`: muted wooden tap that glides down, for chips, tags, rule pieces and CTAs.
-  - `msg`: a soft, mid-pitched pop that glides up (email arrives, question sent, answer in, matter drafted).
-    It's distinct from `tap` by design.
+- **Music** (`public/audio/music.wav`): a faint, medium-swing jazz bed in Bb at about 117 BPM. It has a walking upright
+  bass, a soft ride and hi-hat, and Rhodes comping over ii–V–I–VI (Cm9, F13, Bbmaj9, G7b9), with no brushes. It lands
+  on Bb6/9 as "Try it today" enters and rings out. It's mixed about 16 dB under the effects (`MUSIC_VOLUME` in
+  `src/Soundtrack.tsx`).
+- **Sound effects** (`public/audio/sfx/`): only two, kept soft and sparse.
+  - `tap`: muted wooden tap. Used on every slide as things arrive: tags, chips, the email and proposed matter,
+    the question, answer and sources, rule pieces, and the CTAs.
   - `click`: the cursor pressing "Create matter".
-  - `insight`: "Proposed matter", a low string swell that settles onto a `msg`-style pop.
 
   Each one is placed in `SLIDE_SFX` (`src/slides.tsx`) using the same constants as the animation, so the sync holds
-  when timing changes. Levels live there and in `src/Soundtrack.tsx`. Each sound has its own seeded RNG, so
-  `python3 scripts/make_audio.py tap msg` regenerates only those files.
-- Mix: effects about 15 dB above the music. To check a single stem, render with `--props='{"stem":"music"}'` or `'{"stem":"sfx"}'`.
+  when timing changes. Each sound has its own seeded RNG, so `python3 scripts/make_audio.py tap` regenerates only
+  that file, and `python3 scripts/make_audio.py music` regenerates only the music.
+- To check a single stem, render with `--props='{"stem":"music"}'` or `'{"stem":"sfx"}'`.
 
 ## QA
 

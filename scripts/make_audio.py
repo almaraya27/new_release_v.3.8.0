@@ -99,24 +99,6 @@ def write_wav(path, x, peak_db=-1.0):
 # Instruments
 # ---------------------------------------------------------------------------
 
-def strings(notes, dur, level=1.0):
-    """Low, warm string section: detuned saws, dark filter, slow bow and vibrato."""
-    t = t_axis(dur + 1.6)
-    out = np.zeros(len(t))
-    vib = 1 + 0.0025 * np.sin(2 * np.pi * 5.1 * t)
-    for nte in notes:
-        f0 = hz(nte)
-        for det in (-0.08, 0.0, 0.09):
-            f = f0 * 2 ** (det / 12)
-            ph = 2 * np.pi * np.cumsum(f * vib) / SR
-            k = 1
-            while f * k < 3500 and k <= 14:
-                out += ((-1) ** (k + 1) / k) / (1 + (f * k / 650) ** 2) * np.sin(k * ph + det * k)
-                k += 1
-    env = adsr(len(t), 1.6, 0.4, 1.0, 1.4, dur)
-    return out * env * level / (len(notes) * 3)
-
-
 def felt_tap(f0=420, f1=300, decay=0.03):
     """Muted wooden tap: low, short, rounded."""
     t = t_axis(0.25)
@@ -144,54 +126,10 @@ def finish(x, wet=0.12, pan=0.0, stereo_in=False):
     return s[: loud[-1] + 1 if len(loud) else len(s)]
 
 
-def smooth_air(dur, peak_cut, shape):
-    """Brown noise through two cascaded lowpasses whose cutoff rises and falls:
-    a soft, grain-free 'air' movement."""
-    t = t_axis(dur)
-    brown = np.cumsum(rng.standard_normal(len(t)))
-    brown = hp(brown - brown.mean(), 60)
-    u = t / dur
-    cut = 90 + (peak_cut - 90) * np.sin(np.pi * u) ** 1.5
-    y1 = np.zeros(len(t))
-    y2 = np.zeros(len(t))
-    z1 = z2 = 0.0
-    a = 1 - np.exp(-2 * np.pi * cut / SR)
-    for i in range(len(t)):
-        z1 += a[i] * (brown[i] - z1)
-        z2 += a[i] * (z1 - z2)
-        y2[i] = z2
-    return y2 * shape(u)
-
-
-def bubble_pop(f_from, f_to, decay=0.055):
-    """Soft, rounded pop that glides *up* in pitch (a message arriving),
-    so it reads differently from the woody, downward `tap`."""
-    t = t_axis(0.3)
-    glide = np.minimum(t / 0.035, 1)
-    f = f_from + (f_to - f_from) * (1 - (1 - glide) ** 2)
-    ph = 2 * np.pi * np.cumsum(f) / SR
-    body = np.sin(ph) + 0.18 * np.sin(2 * ph) * np.exp(-t / 0.02)
-    env = np.minimum(t / 0.004, 1) * np.exp(-t / decay)
-    return lp(body * env, 2500)
-
-
 # Each sound gets its own seeded RNG so regenerating one never changes another.
-def build_land():
-    t = t_axis(0.5)
-    thud = np.sin(2 * np.pi * (52 + 30 * np.exp(-t / 0.05)) * t) * np.exp(-t / 0.13)
-    air = smooth_air(0.5, 260, lambda u: np.exp(-u * 9)) * 0.8
-    air /= max(np.abs(air).max(), 1e-9)
-    return finish((thud + 0.25 * air) * np.minimum(t / 0.01, 1), 0.08)
-
-
 def build_tap():
     """Muted wooden tap for chips, tags, rule pieces and CTAs."""
     return finish(felt_tap(), 0.1)
-
-
-def build_msg():
-    """Message pop: email in, question sent, answer in, matter drafted."""
-    return finish(bubble_pop(360, 600), 0.14)
 
 
 def build_click():
@@ -212,31 +150,15 @@ def build_click():
     return finish(lp(click, 3000), 0.05)
 
 
-def build_insight():
-    """"Proposed matter": a low string swell that settles onto a soft message pop."""
-    swell = strings([46, 53, 58], 0.9, 1.0)[: int(1.1 * SR)]
-    swell *= np.sin(np.pi * np.clip(np.arange(len(swell)) / (1.1 * SR), 0, 1)) ** 1.2
-    ins = np.zeros(int(1.6 * SR))
-    ins[: len(swell)] += lp(swell, 1400) / max(np.abs(swell).max(), 1e-9) * 0.45
-    pop = bubble_pop(330, 560, 0.06)
-    o = int(0.45 * SR)
-    ins[o : o + len(pop)] += pop * 0.9
-    return finish(ins, 0.2)
-
-
 BUILDERS = {
-    "land": build_land,
     "tap": build_tap,
-    "msg": build_msg,
     "click": build_click,
-    "insight": build_insight,
 }
 
 
-
 # ---------------------------------------------------------------------------
-# Music: a faint, medium-swing jazz trio bed in Bb (walking upright bass,
-# brushes and ride, soft Rhodes comping). Mixed to sit well under the effects.
+# Music: a faint, medium-swing jazz bed in Bb (walking upright bass, soft
+# ride and hi-hat, Rhodes comping). Mixed to sit well under the effects.
 # ---------------------------------------------------------------------------
 
 def rhodes(note, dur, vel=0.5):
@@ -339,8 +261,11 @@ def make_music(tl):
             place(kit, stereo(ride(v), 0.35), t0 + pos * beat + hum(b * 6 + int(pos * 3), 0.004))
         for pos in (1, 3):
             place(kit, stereo(hat_chick(0.6), -0.3), t0 + pos * beat)
-        place(kit, stereo(brush_sweep(beat * 1.9, 0.35), -0.15), t0)
-        place(kit, stereo(brush_sweep(beat * 1.9, 0.3), -0.15), t0 + 2 * beat)
+        # Brushes removed by request. They're still generated (and discarded)
+        # so the random sequence, and therefore every other instrument, stays
+        # identical to the approved version.
+        brush_sweep(beat * 1.9, 0.35)
+        brush_sweep(beat * 1.9, 0.3)
 
     # Ending: Bb6/9 with a soft ride bell-ish hit, letting it ring out.
     tail = total - final_at

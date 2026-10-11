@@ -686,7 +686,7 @@ export const SLIDES = [
 // the animations above so they stay in sync when timing changes.
 // ---------------------------------------------------------------------------
 
-export type SoundName = "land" | "tap" | "click" | "msg" | "insight";
+export type SoundName = "tap" | "click";
 export type Sfx = { at: number; sound: SoundName; volume: number; rate?: number };
 
 const S4_CHIPS = S4_STREAM + S4_ANSWER.join(" ").split(" ").length * S4_WORD + 6;
@@ -694,33 +694,23 @@ const S4_CHIPS = S4_STREAM + S4_ANSWER.join(" ").split(" ").length * S4_WORD + 6
 // Deliberately sparse: one sound per meaningful moment, not per element.
 export const SLIDE_SFX: Sfx[][] = [
   // 1. Intake & Matters: tags arrive.
-  [
-    { at: T0 + 31, sound: "tap", volume: 0.4 },
-  ],
+  [{ at: T0 + 31, sound: "tap", volume: 0.4 }],
   // 2. Matters: email arrives, the matter is proposed, cursor clicks.
   [
-    { at: T0 + 3, sound: "msg", volume: 0.4 },
-    { at: T0 + 16, sound: "insight", volume: 0.42 },
+    { at: T0 + 3, sound: "tap", volume: 0.4 },
+    { at: T0 + 18, sound: "tap", volume: 0.4 },
     { at: S2_CLICK, sound: "click", volume: 0.6 },
   ],
   // 3. Brief: chips arrive.
-  [
-    { at: T0 + 29, sound: "tap", volume: 0.4 },
-  ],
+  [{ at: T0 + 29, sound: "tap", volume: 0.4 }],
   // 4. Assistant: question sent, answer arrives, sources land.
   [
-    { at: T0 + 3, sound: "msg", volume: 0.4 },
-    { at: S4_STREAM, sound: "msg", volume: 0.4, rate: 0.9 },
+    { at: T0 + 3, sound: "tap", volume: 0.4 },
+    { at: S4_STREAM, sound: "tap", volume: 0.4 },
     { at: Math.round(S4_CHIPS) + 1, sound: "tap", volume: 0.4 },
   ],
   // 5. Rules: the four rule pieces settle.
-  [
-    ...[1, 3, 5, 7].map((k): Sfx => ({ at: T0 + 3 + k * 4, sound: "tap", volume: 0.32 })),
-  ],
-  // 6. Try it today: email in, matter drafted, CTAs.
-  [
-    { at: T0 + 3, sound: "msg", volume: 0.4 },
-    { at: T0 + 29, sound: "msg", volume: 0.4, rate: 0.9 },
-    { at: T0 + 47, sound: "tap", volume: 0.4 },
-  ],
+  [...[1, 3, 5, 7].map((k): Sfx => ({ at: T0 + 3 + k * 4, sound: "tap", volume: 0.32 }))],
+  // 6. Try it today: CTAs.
+  [{ at: T0 + 47, sound: "tap", volume: 0.4 }],
 ];

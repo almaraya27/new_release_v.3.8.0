@@ -1,7 +1,8 @@
 """Synthesizes the video's sound effects: a small palette of soft UI sounds.
 Everything is generated from scratch (no samples), so it is royalty-free.
 
-    python3 scripts/make_audio.py
+    python3 scripts/make_audio.py              # every sound
+    python3 scripts/make_audio.py tick msg     # only these
 
 Writes public/audio/sfx/<name>.wav (48 kHz stereo).
 """
@@ -96,30 +97,6 @@ def write_wav(path, x, peak_db=-1.0):
 # Instruments
 # ---------------------------------------------------------------------------
 
-def piano(note, dur, vel=0.6):
-    """Warm, felt-damped piano: inharmonic partials, three slightly detuned
-    strings per note, two-stage decay, soft hammer and a damper release."""
-    f = hz(note)
-    ring = float(np.clip(3.4 * (261.6 / f) ** 0.5, 1.4, 7.0))
-    t = t_axis(min(dur, ring * 1.6) + 0.5)
-    cutoff = 700 + 1500 * vel  # softer touch = darker tone
-    out = np.zeros(len(t))
-    B = 0.00035
-    for n in range(1, 14):
-        fn = n * f * np.sqrt(1 + B * n * n)
-        if fn > 7000:
-            break
-        amp = (1 / n**1.15) / (1 + (fn / cutoff) ** 2)
-        tau = ring / (1 + 0.45 * (n - 1))
-        env = 0.65 * np.exp(-t / (0.22 * tau)) + 0.35 * np.exp(-t / tau)
-        for cents in (-0.9, 0.0, 0.8):
-            out += amp / 3 * env * np.sin(2 * np.pi * fn * 2 ** (cents / 1200) * t + rng.uniform(0, 6.28))
-    hammer = lp(rng.standard_normal(len(t)), 280) * np.exp(-t / 0.018) * 0.35
-    out = (out + hammer) * np.minimum(t / 0.006, 1)
-    out *= np.exp(-np.clip(t - dur, 0, None) / 0.18)  # damper
-    return out * vel
-
-
 def strings(notes, dur, level=1.0):
     """Low, warm string section: detuned saws, dark filter, slow bow and vibrato."""
     t = t_axis(dur + 1.6)
@@ -148,7 +125,7 @@ def felt_tap(f0=420, f1=300, decay=0.03):
 
 
 # ---------------------------------------------------------------------------
-# Sound effects: low, soft and in key with each other (pitched sounds use F and Bb).
+# Sound effects: low, soft and sparse.
 # ---------------------------------------------------------------------------
 
 SFX_IR = None
@@ -184,34 +161,48 @@ def smooth_air(dur, peak_cut, shape):
     return y2 * shape(u)
 
 
-def make_sfx():
-    for old in (OUT / "sfx").glob("*.wav"):
-        old.unlink()
-    sfx = {}
+def bubble_pop(f_from, f_to, decay=0.055):
+    """Soft, rounded pop that glides *up* in pitch (a message arriving),
+    so it reads differently from the woody, downward `tap`."""
+    t = t_axis(0.3)
+    glide = np.minimum(t / 0.035, 1)
+    f = f_from + (f_to - f_from) * (1 - (1 - glide) ** 2)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    body = np.sin(ph) + 0.18 * np.sin(2 * ph) * np.exp(-t / 0.02)
+    env = np.minimum(t / 0.004, 1) * np.exp(-t / decay)
+    return lp(body * env, 2500)
 
-    # Card settles: deep, soft felt thud.
+
+# Each sound gets its own seeded RNG so regenerating one never changes another.
+def build_land():
     t = t_axis(0.5)
     thud = np.sin(2 * np.pi * (52 + 30 * np.exp(-t / 0.05)) * t) * np.exp(-t / 0.13)
     air = smooth_air(0.5, 260, lambda u: np.exp(-u * 9)) * 0.8
     air /= max(np.abs(air).max(), 1e-9)
-    sfx["land"] = finish((thud + 0.25 * air) * np.minimum(t / 0.01, 1), 0.08)
+    return finish((thud + 0.25 * air) * np.minimum(t / 0.01, 1), 0.08)
 
-    # Tap: muted wooden tap for chips, tags, rule pieces and CTAs.
-    sfx["tap"] = finish(felt_tap(), 0.1)
 
-    # Check: two soft piano notes, F4 then Bb4.
-    chk = np.zeros(int(2.4 * SR))
-    for i, nte in enumerate((65, 70)):
-        p = piano(nte, 0.7, 0.42 - 0.04 * i)
-        o = int(i * 0.09 * SR)
-        chk[o : o + len(p)] += p[: len(chk) - o]
-    sfx["check"] = finish(chk, 0.2)
+def build_tap():
+    """Muted wooden tap for chips, tags, rule pieces and CTAs."""
+    return finish(felt_tap(), 0.1)
 
-    # Notes: single soft piano notes for messages (email in, chat out / in).
-    sfx["note-hi"] = finish(piano(65, 0.6, 0.4), 0.2)   # F4
-    sfx["note-lo"] = finish(piano(58, 0.6, 0.42), 0.2)  # Bb3
 
-    # Mouse click: soft, low-mid press and release.
+def build_msg():
+    """Message pop: email in, question sent, answer in, matter drafted."""
+    return finish(bubble_pop(360, 600), 0.14)
+
+
+def build_tick():
+    """Check tick: a short, soft tick with a little body (no ringing tone)."""
+    t = t_axis(0.08)
+    body = np.sin(2 * np.pi * 760 * t) * np.exp(-t / 0.007)
+    snap = bp(rng.standard_normal(len(t)), 1200, 3800) * np.exp(-t / 0.0022) * 0.55
+    x = (body + snap) * np.minimum(t / 0.0006, 1)
+    return finish(lp(x, 5000), 0.06)
+
+
+def build_click():
+    """Mouse click: soft, low-mid press and release."""
     t = t_axis(0.12)
 
     def transient(level):
@@ -225,24 +216,43 @@ def make_sfx():
     rel = transient(0.5)
     o = int(0.07 * SR)
     click[o:] += rel[: len(click) - o]
-    sfx["click"] = finish(lp(click, 3000), 0.05)
+    return finish(lp(click, 3000), 0.05)
 
-    # Insight ("Proposed matter"): a low string swell resolving onto a soft
-    # Bb/F piano dyad. Considered rather than sparkly.
+
+def build_insight():
+    """"Proposed matter": a low string swell that settles onto a soft message pop."""
     swell = strings([46, 53, 58], 0.9, 1.0)[: int(1.1 * SR)]
     swell *= np.sin(np.pi * np.clip(np.arange(len(swell)) / (1.1 * SR), 0, 1)) ** 1.2
-    ins = np.zeros(int(2.6 * SR))
-    ins[: len(swell)] += lp(swell, 1400) / max(np.abs(swell).max(), 1e-9) * 0.5
-    for i, nte in enumerate((58, 65)):
-        p = piano(nte, 1.0, 0.38)
-        o = int((0.42 + 0.05 * i) * SR)
-        ins[o : o + len(p)] += p[: len(ins) - o]
-    sfx["insight"] = finish(ins, 0.25)
+    ins = np.zeros(int(1.6 * SR))
+    ins[: len(swell)] += lp(swell, 1400) / max(np.abs(swell).max(), 1e-9) * 0.45
+    pop = bubble_pop(330, 560, 0.06)
+    o = int(0.45 * SR)
+    ins[o : o + len(pop)] += pop * 0.9
+    return finish(ins, 0.2)
 
-    for name, x in sfx.items():
-        write_wav(OUT / "sfx" / f"{name}.wav", x, -3.0)
-    print("sfx:", ", ".join(sfx))
+
+BUILDERS = {
+    "land": build_land,
+    "tap": build_tap,
+    "msg": build_msg,
+    "tick": build_tick,
+    "click": build_click,
+    "insight": build_insight,
+}
+
+
+def make_sfx(names):
+    global rng
+    import zlib
+
+    for name in names:
+        rng = np.random.default_rng(zlib.crc32(name.encode()))
+        write_wav(OUT / "sfx" / f"{name}.wav", BUILDERS[name](), -3.0)
+    print("sfx:", ", ".join(names))
 
 
 if __name__ == "__main__":
-    make_sfx()
+    import sys
+
+    # Optionally pass sound names to regenerate only those.
+    make_sfx(sys.argv[1:] or list(BUILDERS))

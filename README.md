@@ -36,12 +36,19 @@ npm run typecheck
 
 Sound effects only, with no music. All of them are original and generated in code by `scripts/make_audio.py` (no samples):
 
-- **Sound effects** (`public/audio/sfx/`), kept low, soft and sparse: land (card settles), tap (muted wooden
-  tap for chips and rule pieces), check (two soft piano notes, F4 to Bb4), note-hi / note-lo (single piano notes for
-  email and chat), click (cursor), and insight ("Proposed matter": a low string swell resolving onto a piano dyad).
+- **Sound effects** (`public/audio/sfx/`), kept soft and sparse:
+  - `land`: deep felt thud as each card settles.
+  - `tap`: muted wooden tap that glides down, for chips, tags, rule pieces and CTAs.
+  - `msg`: a soft, mid-pitched pop that glides up (email arrives, question sent, answer in, matter drafted).
+    It's distinct from `tap` by design.
+  - `tick`: a short, soft tick when a green check appears.
+  - `click`: the cursor pressing "Create matter".
+  - `insight`: "Proposed matter", a low string swell that settles onto a `msg`-style pop.
+
   Each one is placed in `SLIDE_SFX` (`src/slides.tsx`) using the same constants as the animation, so the sync holds
-  when timing changes. Levels live in `src/Soundtrack.tsx`.
-- Mix: about −17 LUFS integrated, under −0.5 dB true peak.
+  when timing changes. Levels live there and in `src/Soundtrack.tsx`. Each sound has its own seeded RNG, so
+  `python3 scripts/make_audio.py tick msg` regenerates only those files.
+- Mix: about −21 LUFS integrated (short sounds only), −1.2 dB true peak.
 
 ## QA
 

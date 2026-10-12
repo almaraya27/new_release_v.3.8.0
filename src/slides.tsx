@@ -590,6 +590,9 @@ export const S5_DUR = 173;
 // 6. Try it today
 // ---------------------------------------------------------------------------
 
+// Single CTA, left-aligned with the text column; sized for ~45px padding around the label.
+const CTA_W = 797;
+
 export const S6Try: React.FC<SlideProps> = ({ frame: f }) => {
   const fwd = ease(f, T0 + 2, 20);
   const icon = pop(f, T0 + 2, 18);
@@ -597,8 +600,7 @@ export const S6Try: React.FC<SlideProps> = ({ frame: f }) => {
   const drafted = ease(f, T0 + 28, 18);
   const disc = pop(f, T0 + 28, 18);
   const now = ease(f, T0 + 36, 14);
-  const cta1 = pop(f, T0 + 46, 26);
-  const cta2 = pop(f, T0 + 51, 26);
+  const cta = pop(f, T0 + 46, 26);
   const ctaStyle = (t: number, ox: number): React.CSSProperties => ({
     position: "absolute",
     left: 0,
@@ -655,16 +657,10 @@ export const S6Try: React.FC<SlideProps> = ({ frame: f }) => {
           Just now
         </Txt>
       </Card>
-      <div style={ctaStyle(cta1, 536)}>
-        <Box x={149} y={1392} w={774} h={115} r={40} variant="cta" />
-        <Txt x={536} y={1466} size={57} color="#fff" align="center" opsz={DM_14}>
-          Start free at <span style={{ fontWeight: 700 }}>instaSpace.ai</span>
-        </Txt>
-      </div>
-      <div style={ctaStyle(cta2, 1189)}>
-        <Box x={975} y={1392} w={429} h={115} r={40} variant="cta" />
-        <Txt x={1189.5} y={1466} size={57.5} color="#fff" align="center">
-          Book a demo
+      <div style={ctaStyle(cta, 149 + CTA_W / 2)}>
+        <Box x={149} y={1392} w={CTA_W} h={115} r={40} variant="cta" />
+        <Txt x={149 + CTA_W / 2} y={1466} size={57} color="#fff" align="center" opsz={DM_14}>
+          Start now at <span style={{ fontWeight: 700 }}>instaSpace.ai</span>
         </Txt>
       </div>
     </>
@@ -711,6 +707,6 @@ export const SLIDE_SFX: Sfx[][] = [
   ],
   // 5. Rules: the four rule pieces settle.
   [...[1, 3, 5, 7].map((k): Sfx => ({ at: T0 + 3 + k * 4, sound: "tap", volume: 0.32 }))],
-  // 6. Try it today: CTAs.
+  // 6. Try it today: the CTA.
   [{ at: T0 + 47, sound: "tap", volume: 0.4 }],
 ];
